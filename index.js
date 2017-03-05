@@ -68,7 +68,6 @@ function onError(msg) {
 function commandsDictionary(type) {
   let dictionaries = {
     'commons': {
-      changeDirectory: (path) => `cd ${path}`,
       cloneRepo: (url) => `git clone ${url}`
     },
     'bower': {
@@ -96,32 +95,35 @@ function init(type, config) {
   let cwd = process.cwd();
   let dictionary = commandsDictionary(type);
   let commons = commandsDictionary('commons');
+  let clonePath;
   let url;
 
   command(dictionary.getRepoUrl(packageName))
     .then((data) => {
       // By default clone in the current directory.
       url = data.replace(/git\+/, '');
-      let path = config.path || cwd;
+      clonePath = config.path || cwd;
       console.log( chalk.green(' Deleting existing directory...') );
       rimraf( '.' + dictionary.directory + packageName, function(err) {
         if (err) {
           onError('Error deleting existing node_modules package\'s directory ');
         }
       });
-      // Position on specific path
-      return command( commons.changeDirectory(path) );
     })
     .then(() => {
       // Clone the repo
-      return command( commons.cloneRepo(url) ).then( () => command( commons.changeDirectory('./' + packageName) ) );
+      process.chdir(clonePath);
+      return command( commons.cloneRepo(url) );
     })
     .then(() => {
       // First step link
-      return command( dictionary.firstLink() ).then( () => command( commons.changeDirectory(cwd) ) );
+      console.log(`${clonePath}${packageName}`);
+      process.chdir(`${clonePath}${packageName}`);
+      return command( dictionary.firstLink() );
     })
     .then(() => {
       // Second step link
+      process.chdir(cwd);
       return command( dictionary.secondLink(packageName) );
     })
     .catch((e) => {
@@ -135,6 +137,6 @@ fs.readFile(path.resolve(__dirname, 'config.json'), (err, data) => {
   if (err) {
     onError('Can\'t open config file, you must specify a path before using autolink');
   } else {
-    init(type, data);
+    init(type, JSON.parse(data.toString()));
   }
 });
