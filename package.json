@@ -1,10 +1,10 @@
 {
-  "name": "autolink",
+  "name": "simplelink",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "bin": {
-    "autolink": "./index.js"
+    "simplelink": "./index.js"
   },
   "keywords": [],
   "author": "Julián Barrionuevo",
@@ -16,6 +16,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/barriojules/autolink.git"
+    "url": "https://github.com/barriojules/simplelink.git"
   }
 }
