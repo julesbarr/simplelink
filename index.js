@@ -5,7 +5,13 @@ const program = require('commander');
 const chalk = require('chalk');
 const rimraf = require('rimraf');
 const path = require('path');
+const readline = require('readline');
 let packageName;
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 program
   .arguments('<package>')
@@ -95,16 +101,26 @@ function init(type, config) {
   let cwd = process.cwd();
   let dictionary = commandsDictionary(type);
   let commons = commandsDictionary('commons');
-  let clonePath;
+  let clonePath = config.path || cwd;
   let url;
 
   command(dictionary.getRepoUrl(packageName))
     .then((data) => {
       // By default clone in the current directory.
       url = data.replace(/git\+/, '');
-      clonePath = config.path || cwd;
+    }, (err) => {
+      // Prompt for the url in case the get repo command fails.
+      return new Promise((resolve, reject) => {
+        rl.question('The URL for that package couldn\'t be found, please enter it manually: ', (u) => {
+          url = u;
+          rl.close();
+          resolve(url);
+        });
+      });
+    })
+    .then(() => {
       console.log( chalk.green(' Deleting existing directory...') );
-      rimraf( '.' + dictionary.directory + packageName, function(err) {
+      rimraf( '.' + dictionary.directory() + packageName, function(err) {
         if (err) {
           onError('Error deleting existing node_modules package\'s directory ');
         }
