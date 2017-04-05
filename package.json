@@ -6,6 +6,9 @@
   "bin": {
     "simplelink": "./index.js"
   },
+  "scripts": {
+    "test": "mocha --recursive"
+  },
   "keywords": [],
   "author": "Julián Barrionuevo",
   "license": "ISC",
@@ -16,6 +19,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/barriojules/simplelink.git"
+    "url": "https://github.com/barriojules/simplelink.gitasdasdasd"
+  },
+  "devDependencies": {
+    "mocha": "^3.2.0"
   }
 }
