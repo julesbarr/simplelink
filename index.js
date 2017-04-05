@@ -8,6 +8,7 @@ const path = require('path');
 const lookInfile = require('./libs/fileSearch');
 const configHandler = require('./libs/configHandler');
 const promptURLManually = require('./libs/prompt');
+const url = require('url');
 let packageName;
 
 program
@@ -96,30 +97,34 @@ function init(config) {
   let dictionary = commandsDictionary(type);
   let commons = commandsDictionary('commons');
   let clonePath = config.path || cwd;
-  let packagePath = path.resolve( clonePath, packageName );
-  let url;
+  let packagePath;
+  let packageUrl;
+  let folderName;
   
   command(dictionary.getRepoUrl(packageName))
   .then((data) => {
-    let url;
     if (data.indexOf('Package not found.') > -1 || data === 'null' || data === 'undefined' || !data) {
       throw new Error('Package not found.');
     }
-    
-    let prefix = /.*(git|http|https):\/\//.exec(data)[1];
-    url = data.replace(/.*(git|http|https):\/\//, `${prefix}://`);
-    return Promise.resolve(url);
+    return Promise.resolve(data);
   })
   .catch(function() {
     return lookInfile(cwd, dictionary.filename, packageName);
   })
   .catch(promptURLManually)
   .then((u) => {
-    url = u;
+    packageUrl = u.trim().replace(/\/$/, '').replace(/\.git$/,'');
+    let prefix = /.*(git|http|https|ssh):\/\//.exec(packageUrl);
+    prefix = prefix && prefix[1];
+    if (prefix) {
+      packageUrl = packageUrl.replace(/.*(git|http|https|ssh):\/\//, `${prefix}://`);
+    }
+    folderName = /(?!\/)[^/]*$/.exec(packageUrl)[0];
+    packagePath = path.resolve(clonePath, folderName);
   })
   .then(() => {
     console.log( chalk.green(' Deleting existing directory...') );
-    rimraf( '.' + dictionary.directory() + packageName, function(err) {
+    rimraf( path.resolve(cwd, dictionary.directory(), packageName), function(err) {
       if (err) {
         onError('Error deleting existing package\'s directory ');
       }
@@ -131,7 +136,7 @@ function init(config) {
         if (err) {
           console.log( chalk.blue('DIRECTORY DOESN\'T EXISTS, CLONING THE REPO...') );
           process.chdir(clonePath);
-          command(commons.cloneRepo(url)).then(resolve, reject);
+          command(commons.cloneRepo(packageUrl)).then(resolve, reject);
         } else {
           console.log( chalk.blue('DIRECTORY EXISTS, USING EXISTING ONE... ') );
           resolve();
@@ -156,4 +161,6 @@ function init(config) {
   .catch(onError)
 }
 
-configHandler.read(init);
+if (!program.path) {
+  configHandler.read(init);
+}
