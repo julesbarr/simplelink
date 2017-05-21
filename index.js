@@ -92,11 +92,12 @@ function init(config) {
     if (prefix) {
       // Clean up the prefix.
       packageUrl = packageUrl.replace(/.*(git|http|https|ssh):\/\//, `${prefix}://`);
-      // Remove any versioning from the package name.
-      packageUrl = packageUrl.replace(/#.*$/, '');
     }
-    // Picks the phrase after the last backslash, ex: http://github.net/test will pick test
-    folderName = /(?!\/)[^/]*$/.exec(packageUrl)[0];
+    /**
+     * Picks the phrase after the last backslash, ex: http://github.net/test will pick test
+     * Removes any versioning from the folderName
+     */
+    folderName = /(?!\/)[^/]*$/.exec(packageUrl)[0].replace(/#.*$/, '');
     packagePath = path.resolve(clonePath, folderName);
   })
   .then(() => {
