@@ -8,7 +8,7 @@ const path = require('path');
 const lookInfile = require('./libs/fileSearch');
 const configHandler = require('./libs/configHandler');
 const promptURLManually = require('./libs/prompt');
-const commandsDictionary = reuqire('./libs/commands');
+const commandsDictionary = require('./libs/commands');
 const url = require('url');
 let packageName;
 
