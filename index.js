@@ -8,6 +8,7 @@ const path = require('path');
 const lookInfile = require('./libs/fileSearch');
 const configHandler = require('./libs/configHandler');
 const promptURLManually = require('./libs/prompt');
+const commandsDictionary = reuqire('./libs/commands');
 const url = require('url');
 let packageName;
 
@@ -22,7 +23,7 @@ program
 .parse(process.argv);
 
 if (program.bower && program.npm) {
-  onError('Can\'t Autolink both Npm and Bower at the same time');
+  onError('Can\'t Autolink both npm and bower at the same time');
 }
 
 // Overwrite config file in case a path is provided.
@@ -60,34 +61,6 @@ function onError(msg) {
 }
 
 /**
-* Returns the proper dictionary, with lazy evaluation strings
-* @param { String } type - type of dictionary
-* @returns { Function }
-*/
-function commandsDictionary(type) {
-  let dictionaries = {
-    'commons': {
-      cloneRepo: (url) => `git clone ${url}`
-    },
-    'bower': {
-      filename: 'bower.json',
-      directory: () => '/bower_components/',
-      getRepoUrl: (packageName) => `bower lookup ${packageName}`,
-      firstLink: () => 'bower link',
-      secondLink: (packageName) => `bower link ${packageName}`
-    },
-    'npm': {
-      filename: 'package.json',
-      directory: () => '/node_modules/',
-      getRepoUrl: (packageName) => `npm view ${packageName} repository.url`,
-      firstLink: () => 'npm link',
-      secondLink: (packageName) => `npm link ${packageName}`
-    }
-  };
-  return dictionaries[type];
-}
-
-/**
 * Initialization function
 * @param { Object } config - config Object
 */
@@ -117,8 +90,12 @@ function init(config) {
     let prefix = /.*(git|http|https|ssh):\/\//.exec(packageUrl);
     prefix = prefix && prefix[1];
     if (prefix) {
+      // Clean up the prefix.
       packageUrl = packageUrl.replace(/.*(git|http|https|ssh):\/\//, `${prefix}://`);
+      // Remove any versioning from the package name.
+      packageUrl = packageUrl.replace(/#.*$/, '');
     }
+    // Picks the phrase after the last backslash, ex: http://github.net/test will pick test
     folderName = /(?!\/)[^/]*$/.exec(packageUrl)[0];
     packagePath = path.resolve(clonePath, folderName);
   })
